@@ -1,6 +1,7 @@
 #include "skygfx.h"
 
 #include <map>
+#include <string>
 
 
 static TexInfo faketexinfo;
@@ -178,7 +179,7 @@ TexDBPluginAttach(void)
 
 static int txdslot;
 char *txdnames[65500];	//[5000]; UG needs a lot
-char currentTxdName[32];
+char currentTxdName[260];
 
 static RwTexture *(*TxdStoreFindCB)(char *name);
 static RwTexture*
@@ -192,7 +193,7 @@ TexDbFindCB(char *name)
 			if(info->affiliateTex)
 				info = info->affiliateTex;
 			if(info->hassibling){
-				static char sibling[200];
+				static char sibling[512];
 				sprintf(sibling, "%s_%s", name, currentTxdName);
 				TexInfo *sib = FindTexInfo(sibling);
 				if(sib)
@@ -209,14 +210,20 @@ TexDbFindCB(char *name)
 static int
 storeTxdName(int ret/*return address on stack*/, char *txdname)
 {
-	txdnames[txdslot] = strdup(txdname);
+	if(txdslot >= 0 && txdslot < 65500 && txdname)
+		txdnames[txdslot] = strdup(txdname);
 	return txdslot;
 }
 
 static void
 setCurrentTxdName(void)
 {
-	strcpy(currentTxdName, txdnames[txdslot]);
+	if(txdslot >= 0 && txdslot < 65500 && txdnames[txdslot]){
+		strncpy(currentTxdName, txdnames[txdslot], sizeof(currentTxdName) - 1);
+		currentTxdName[sizeof(currentTxdName) - 1] = '\0';
+	}else{
+		currentTxdName[0] = '\0';
+	}
 }
 
 static void __declspec(naked)
